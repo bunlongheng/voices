@@ -1,0 +1,40 @@
+{
+  "name": "voices",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3037",
+    "build": "next build",
+    "start": "next start -p 3037",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "export:manifest": "tsx scripts/export-manifest.ts",
+    "prepare": "husky || true"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.1",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.6",
+    "@tailwindcss/postcss": "^4",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.1",
+    "husky": "^9",
+    "jsdom": "^30.0.1",
+    "tailwindcss": "^4",
+    "tsx": "^4.19.2",
+    "typescript": "^5",
+    "vitest": "^4.1.11"
+  }
+}
