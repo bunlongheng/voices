@@ -12,7 +12,8 @@
 html[data-theme="dark"] {
   --bg: #323437;
   --bg-deep: #2c2e31;
-  --sub: #646669;
+  /* lifted from the classic serika #646669 so dim text clears WCAG AA contrast */
+  --sub: #9a9ca0;
   --sub-alt: #2c2e31;
   --text: #d1d0c5;
   --main: #e2b714;
@@ -25,7 +26,8 @@ html[data-theme="dark"] {
 html[data-theme="light"] {
   --bg: #e6e4dc;
   --bg-deep: #dcdad0;
-  --sub: #a7a49a;
+  /* darkened from #a7a49a so dim text clears WCAG AA contrast on paper bg */
+  --sub: #75726a;
   --sub-alt: #d6d4ca;
   --text: #2b2a27;
   --main: #b58a00;

@@ -73,7 +73,8 @@ flowchart LR
 | --- | --- |
 | `lib/elevenlabs.ts` | TTS synth, sentence chunking, audio stitch (tested) |
 | `lib/db.ts` / `lib/manifest.ts` | sqlite schema + static manifest export |
-| `lib/auth.ts` | local/LAN or bearer-token write gate (tested) |
+| `lib/audio.ts` | audio file paths + public URLs (separate from the DB) |
+| `lib/auth.ts` / `lib/rate-limit.ts` | write gate (local/LAN or bearer) + per-caller synth limit (tested) |
 | `lib/voices.ts` | curated premade voices + helpers (tested) |
 | `components/Playground.tsx` | voice picker + text + settings + speak |
 | `components/Player.tsx` / `TakeList.tsx` | scrubbable audio + saved-take library |

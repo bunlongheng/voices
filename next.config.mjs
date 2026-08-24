@@ -1,24 +1,10 @@
-const isDev = process.env.NODE_ENV !== "production";
-
+// The Content-Security-Policy is set per-request in middleware.ts (nonce-based).
+// These static headers cover the rest.
 const securityHeaders = [
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-  {
-    key: "Content-Security-Policy",
-    value: [
-      "default-src 'self'",
-      "img-src 'self' data:",
-      "media-src 'self'",
-      "style-src 'self' 'unsafe-inline'",
-      // React dev mode needs eval() for debugging; production never does.
-      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
-      "connect-src 'self'",
-      "base-uri 'self'",
-      "frame-ancestors 'self'",
-    ].join("; "),
-  },
 ];
 
 /** @type {import('next').NextConfig} */
