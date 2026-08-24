@@ -28,22 +28,35 @@ export default function App() {
   const [canManage, setCanManage] = useState(false);
   const [theme, toggleTheme] = useTheme();
 
-  // Load takes: prefer the live API (local); fall back to the committed manifest.
+  // Load takes from the API. It returns the live DB locally and the committed
+  // manifest on Vercel; the x-voices-writable header says which, so the UI knows
+  // whether synthesis/management is possible. /takes.json is a last-ditch fallback.
   const loadTakes = useCallback(async () => {
-    for (const url of ["/api/takes", "/takes.json"]) {
-      try {
-        const r = await fetch(url, { cache: "no-store" });
-        if (!r.ok) continue;
+    try {
+      const r = await fetch("/api/takes", { cache: "no-store" });
+      if (r.ok) {
         const d = (await r.json()) as Take[];
         if (Array.isArray(d)) {
           setTakes(d);
-          setCanManage(url === "/api/takes");
+          setCanManage(r.headers.get("x-voices-writable") === "1");
           setLoading(false);
           return;
         }
-      } catch {
-        /* try next source */
       }
+    } catch {
+      /* fall through to the static manifest */
+    }
+    try {
+      const r = await fetch("/takes.json", { cache: "no-store" });
+      if (r.ok) {
+        const d = (await r.json()) as Take[];
+        if (Array.isArray(d)) {
+          setTakes(d);
+          setCanManage(false);
+        }
+      }
+    } catch {
+      /* nothing to show */
     }
     setLoading(false);
   }, []);

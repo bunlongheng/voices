@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFileSync } from "fs";
+import { writeFileSync, readFileSync } from "fs";
+import { join } from "path";
 import db, { type TakeRow } from "@/lib/db";
 import { audioPath } from "@/lib/audio";
 import { synthesize, estimateSeconds } from "@/lib/elevenlabs";
@@ -15,12 +16,21 @@ export const maxDuration = 300;
 const MAX_CHARS = 5000;
 
 export async function GET() {
+  // On Vercel the filesystem is read-only, so there is no writable DB - serve the
+  // committed manifest instead of opening sqlite (which would 500). The
+  // x-voices-writable header tells the client whether this deploy can synthesize.
+  if (process.env.VERCEL) {
+    const data = readFileSync(join(process.cwd(), "public", "takes.json"), "utf8");
+    return new NextResponse(data, {
+      headers: { "content-type": "application/json", "x-voices-writable": "0" },
+    });
+  }
   const rows = db
     .prepare(
       "SELECT id,text,voice_id,voice_name,has_audio,duration_sec,char_count,stability,style,speed,created_at FROM takes ORDER BY id DESC",
     )
     .all() as TakeRow[];
-  return NextResponse.json(rows);
+  return NextResponse.json(rows, { headers: { "x-voices-writable": "1" } });
 }
 
 // Create a take: synthesize ElevenLabs audio for { text, voice_id?, settings? }
