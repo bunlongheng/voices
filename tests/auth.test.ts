@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { authorized } from "@/lib/auth";
 
 // Minimal NextRequest stand-in: authorized() only reads headers.
@@ -14,6 +14,7 @@ describe("authorized", () => {
   afterEach(() => {
     if (saved.token === undefined) delete process.env.VOICES_TOKEN;
     else process.env.VOICES_TOKEN = saved.token;
+    vi.unstubAllEnvs();
   });
 
   it("allows localhost when no token is set", () => {
@@ -38,5 +39,17 @@ describe("authorized", () => {
     expect(authorized(req({ host: "localhost" }))).toBe(false); // local no longer free-passes
     expect(authorized(req({ host: "example.com", authorization: "Bearer secret" }))).toBe(true);
     expect(authorized(req({ host: "example.com", authorization: "Bearer wrong" }))).toBe(false);
+    expect(authorized(req({ host: "example.com", authorization: "Bearer secre" }))).toBe(false); // length mismatch
+  });
+
+  it("never trusts the Host header in production", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    // no token: even localhost is denied in prod (deploy is read-only)
+    expect(authorized(req({ host: "localhost" }))).toBe(false);
+    expect(authorized(req({ host: "192.168.1.10" }))).toBe(false);
+    // only a configured + matching token passes
+    process.env.VOICES_TOKEN = "secret";
+    expect(authorized(req({ host: "localhost" }))).toBe(false);
+    expect(authorized(req({ host: "voices.example.com", authorization: "Bearer secret" }))).toBe(true);
   });
 });

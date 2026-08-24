@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeFileSync } from "fs";
-import db, { audioPath, type TakeRow } from "@/lib/db";
+import db, { type TakeRow } from "@/lib/db";
+import { audioPath } from "@/lib/audio";
 import { synthesize, estimateSeconds } from "@/lib/elevenlabs";
 import { authorized } from "@/lib/auth";
 import { FALLBACK_VOICE, premadeName } from "@/lib/voices";
 import { DEFAULT_SETTINGS, type Settings } from "@/lib/types";
 import { writeManifest } from "@/lib/manifest";
+import { allow, clientKey } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -25,6 +27,8 @@ export async function GET() {
 // and save it. Returns the new take with a playable audio URL.
 export async function POST(req: NextRequest) {
   if (!authorized(req)) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!allow(clientKey(req)))
+    return NextResponse.json({ error: "rate limited - try again shortly" }, { status: 429 });
 
   const b = await req.json().catch(() => null);
   if (!b) return NextResponse.json({ error: "invalid json" }, { status: 400 });
@@ -66,8 +70,10 @@ export async function POST(req: NextRequest) {
       { status: 201 },
     );
   } catch (e) {
-    // keep the row (has_audio=0) so the user sees the failed attempt + error
-    return NextResponse.json({ id, has_audio: 0, error: String(e) }, { status: 502 });
+    // keep the row (has_audio=0); log the detail server-side, return a generic
+    // message so upstream provider errors never leak to the client
+    console.error("synthesis failed", e);
+    return NextResponse.json({ id, has_audio: 0, error: "synthesis failed" }, { status: 502 });
   }
 }
 

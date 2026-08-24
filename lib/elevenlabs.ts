@@ -64,20 +64,29 @@ async function synthChunk(text: string, voiceId: string, key: string, s: Setting
   return Buffer.from(await res.arrayBuffer());
 }
 
-// Full-take synthesis: chunk -> synth each -> stitch the audio together.
+// Full-take synthesis: chunk -> synth all chunks concurrently -> stitch in order.
+// Promise.all preserves array order, so the stitched track stays correct while
+// the network requests overlap instead of running one-after-another.
 export async function synthesize(text: string, voiceId: string, s: Settings): Promise<Synth> {
   const key = process.env.ELEVENLABS_API_KEY;
   if (!key) throw new Error("ELEVENLABS_API_KEY not set");
 
   const parts = chunkText(text);
-  const bufs: Buffer[] = [];
-  for (const part of parts) bufs.push(await synthChunk(part, voiceId, key, s));
+  const bufs = await Promise.all(parts.map((part) => synthChunk(part, voiceId, key, s)));
 
   const audio = Buffer.concat(bufs);
-  return { audio, duration: estimateSeconds(text, s.speed) };
+  return { audio, duration: durationFromMp3(audio) };
 }
 
-// Rough spoken-length estimate: ~150 words per minute, scaled by speed.
+// The synth endpoint returns 192 kbps CBR mp3, so the real playtime is just
+// bytes / byterate - accurate, unlike a words-per-minute guess.
+const MP3_BYTES_PER_SEC = 192_000 / 8;
+export function durationFromMp3(audio: Buffer): number {
+  return Math.round(audio.length / MP3_BYTES_PER_SEC);
+}
+
+// Rough spoken-length estimate: ~150 words per minute, scaled by speed. Used
+// only to seed the row before audio exists (real duration replaces it after).
 export function estimateSeconds(text: string, speed = 1): number {
   const words = text.split(/\s+/).filter(Boolean).length;
   return Math.round((words / 150) * 60 / (speed || 1));

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { existsSync, rmSync } from "fs";
-import db, { audioPath, type TakeRow } from "@/lib/db";
+import db, { type TakeRow } from "@/lib/db";
+import { audioPath } from "@/lib/audio";
 import { authorized } from "@/lib/auth";
 import { writeManifest } from "@/lib/manifest";
 

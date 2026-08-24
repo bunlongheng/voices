@@ -1,11 +1,12 @@
 import Database from "better-sqlite3";
 import { mkdirSync } from "fs";
 import { join } from "path";
+import { audioDir } from "./audio";
 
 const DATA_DIR = join(process.cwd(), "data");
 // Synthesized audio lives under public/ so Next serves it as STATIC files with
 // native Range/206 support - the only thing iOS Safari <audio> reliably plays.
-const PUB_AUDIO = join(process.cwd(), "public", "audio");
+const PUB_AUDIO = audioDir();
 
 // Lazy singleton. We must NOT open the database at module load: the Vercel
 // production build imports these route modules but never runs a query, and
@@ -53,10 +54,6 @@ const db = new Proxy({} as Database.Database, {
     return typeof v === "function" ? (v as (...a: unknown[]) => unknown).bind(real) : v;
   },
 });
-
-// on-disk paths (written by the API) + public URLs (read by the browser)
-export const audioPath = (id: number | string) => join(PUB_AUDIO, `${id}.mp3`);
-export const audioUrl = (id: number | string) => `/audio/${id}.mp3`;
 
 export type TakeRow = {
   id: number;

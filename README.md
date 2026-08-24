@@ -4,12 +4,13 @@ A text-to-speech playground. Load your own voices, type any text, and hear it re
 
 ![Voices playground](docs/screenshots/playground.png)
 
+[![CI](https://github.com/bunlongheng/voices/actions/workflows/ci.yml/badge.svg)](https://github.com/bunlongheng/voices/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19-149eca?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript)
-![Tests](https://img.shields.io/badge/tests-17%20passing-3fb950)
-![Vulnerabilities](https://img.shields.io/badge/vulns-0-3fb950)
+
+Live: [voices-bheng.vercel.app](https://voices-bheng.vercel.app)
 
 ## Contents
 
@@ -81,7 +82,7 @@ flowchart LR
 ## Tech stack
 
 - **Next.js 16** (App Router, Turbopack) + **React 19** + **TypeScript** (strict)
-- **Tailwind CSS v4**
+- **Tailwind CSS v4** for the reset + base layer; the UI is styled with CSS custom properties (the serika theme) and scoped inline styles
 - **better-sqlite3** for local storage; a static `public/takes.json` manifest for serverless
 - **ElevenLabs** text-to-speech
 - **Vitest** + **Testing Library** for unit tests

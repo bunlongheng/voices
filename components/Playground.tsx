@@ -17,15 +17,20 @@ export default function Playground({
   onSelect,
   canManage,
   onSaved,
+  seed,
 }: {
   voices: Voice[];
   selected: string | null;
   onSelect: (id: string) => void;
   canManage: boolean;
   onSaved: () => void;
+  // when a saved take is "reused", its text + settings seed the initial state
+  seed?: { text: string; stability: number; style: number; speed: number };
 }) {
-  const [text, setText] = useState(SAMPLE_TEXT);
-  const [s, setS] = useState<Settings>(DEFAULT_SETTINGS);
+  const [text, setText] = useState(seed?.text ?? SAMPLE_TEXT);
+  const [s, setS] = useState<Settings>(
+    seed ? { stability: seed.stability, style: seed.style, speed: seed.speed } : DEFAULT_SETTINGS,
+  );
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [audio, setAudio] = useState<string | null>(null);
@@ -80,7 +85,7 @@ export default function Playground({
               border: "1px solid var(--sub-alt)",
               borderRadius: 12,
               padding: "14px 16px",
-              fontSize: 15,
+              fontSize: 16, // 16px keeps iOS Safari from zooming the field on focus
               lineHeight: 1.6,
               outline: "none",
             }}

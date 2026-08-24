@@ -44,7 +44,7 @@ export default function AddVoice({ onAdded }: { onAdded: () => void }) {
     border: "1px solid var(--sub-alt)",
     borderRadius: 10,
     padding: "10px 12px",
-    fontSize: 14,
+    fontSize: 16, // 16px keeps iOS Safari from zooming the field on focus
     outline: "none",
     width: "100%",
   };

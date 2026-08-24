@@ -53,6 +53,20 @@ export default function Player({ src, autoPlay = false }: { src: string; autoPla
     a.currentTime = ((e.clientX - rect.left) / rect.width) * dur;
   };
 
+  // keyboard control on the seek bar: arrows nudge +/-5s, Home/End jump to ends
+  const onKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const a = ref.current;
+    if (!a || !dur) return;
+    let next = a.currentTime;
+    if (e.key === "ArrowRight" || e.key === "ArrowUp") next += 5;
+    else if (e.key === "ArrowLeft" || e.key === "ArrowDown") next -= 5;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = dur;
+    else return;
+    e.preventDefault();
+    a.currentTime = Math.max(0, Math.min(dur, next));
+  };
+
   const pct = dur ? Math.min(100, (t / dur) * 100) : 0;
 
   return (
@@ -87,12 +101,14 @@ export default function Player({ src, autoPlay = false }: { src: string; autoPla
 
       <div
         onClick={seek}
+        onKeyDown={onKey}
         role="slider"
         aria-label="Seek"
         aria-valuenow={Math.round(pct)}
         aria-valuemin={0}
         aria-valuemax={100}
         tabIndex={0}
+        className="focus-ring"
         style={{ flex: 1, height: 6, borderRadius: 999, background: "var(--sub-alt)", cursor: "pointer" }}
       >
         <div style={{ width: `${pct}%`, height: 6, borderRadius: 999, background: "var(--main)" }} />

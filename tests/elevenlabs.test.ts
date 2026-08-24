@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { chunkText, estimateSeconds } from "@/lib/elevenlabs";
+import { chunkText, estimateSeconds, durationFromMp3 } from "@/lib/elevenlabs";
 
 describe("chunkText", () => {
   it("returns a single chunk when the text fits", () => {
@@ -38,5 +38,13 @@ describe("estimateSeconds", () => {
 
   it("handles empty text", () => {
     expect(estimateSeconds("")).toBe(0);
+  });
+});
+
+describe("durationFromMp3", () => {
+  it("derives seconds from 192kbps CBR byte length", () => {
+    // 24000 bytes/sec at 192kbps -> 5 seconds
+    expect(durationFromMp3(Buffer.alloc(24000 * 5))).toBe(5);
+    expect(durationFromMp3(Buffer.alloc(0))).toBe(0);
   });
 });

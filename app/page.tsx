@@ -19,6 +19,10 @@ export default function App() {
   const [takes, setTakes] = useState<Take[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<string>(FALLBACK_VOICE);
+  // reuse: a saved take's text + settings seeded back into the playground.
+  // seedKey forces Playground to remount so it re-reads the seed as initial state.
+  const [seed, setSeed] = useState<{ text: string; stability: number; style: number; speed: number } | null>(null);
+  const [seedKey, setSeedKey] = useState(0);
   // true only when the writable local API served the data - the static Vercel
   // deploy reads *.json, where writes just 401. Gates synthesis + management.
   const [canManage, setCanManage] = useState(false);
@@ -89,6 +93,18 @@ export default function App() {
     },
     [loadTakes],
   );
+
+  const reuseTake = useCallback((t: Take) => {
+    if (t.voice_id) setSelected(t.voice_id);
+    setSeed({
+      text: t.text,
+      stability: t.stability ?? 0.35,
+      style: t.style ?? 0.3,
+      speed: t.speed ?? 1,
+    });
+    setSeedKey((k) => k + 1);
+    setTab("play");
+  }, []);
 
   const deleteVoice = useCallback(
     async (id: string) => {
@@ -178,16 +194,23 @@ export default function App() {
       >
         {tab === "play" && (
           <Playground
+            key={seedKey}
             voices={voices}
             selected={selected}
             onSelect={setSelected}
             canManage={canManage}
             onSaved={loadTakes}
+            seed={seed ?? undefined}
           />
         )}
 
         {tab === "library" && (
-          <TakeList takes={takes} loading={loading} onDelete={canManage ? deleteTake : undefined} />
+          <TakeList
+            takes={takes}
+            loading={loading}
+            onDelete={canManage ? deleteTake : undefined}
+            onReuse={reuseTake}
+          />
         )}
 
         {tab === "voices" && (
