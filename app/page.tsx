@@ -8,6 +8,7 @@ import TakeList from "@/components/TakeList";
 import AddVoice from "@/components/AddVoice";
 import VoicePicker from "@/components/VoicePicker";
 import ThemeToggle, { useTheme } from "@/components/ThemeToggle";
+import Ambient from "@/components/Ambient";
 
 type Tab = "play" | "library" | "voices";
 
@@ -135,7 +136,7 @@ export default function App() {
   );
 
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
+    <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", position: "relative", zIndex: 1 }}>
       <header
         style={{
           display: "flex",
@@ -155,7 +156,8 @@ export default function App() {
             _
           </span>
         </div>
-        <div style={{ marginLeft: "auto" }}>
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4 }}>
+          <Ambient />
           <ThemeToggle theme={theme} onToggle={toggleTheme} />
         </div>
       </header>

@@ -17,7 +17,7 @@ html[data-theme="dark"] {
   --sub: #a6a8ac;
   --sub-alt: #2c2e31;
   --text: #d1d0c5;
-  --main: #e2b714;
+  --main: #2dd4bf;
   --error: #ca4754;
   --card: #2c2e31;
   --card-hi: #3a3c40;
@@ -31,7 +31,7 @@ html[data-theme="light"] {
   --sub: #615e58;
   --sub-alt: #d6d4ca;
   --text: #2b2a27;
-  --main: #b58a00;
+  --main: #0d9488;
   --error: #c14150;
   --card: #efeee6;
   --card-hi: #f6f5ef;
@@ -58,6 +58,37 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   transition: background 0.35s ease, color 0.35s ease;
+}
+
+/* a soft accent glow that settles in the back and slowly breathes; it lifts a
+   touch while the ambient pad is playing ([data-ambient="on"] on <html>) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(58% 48% at 82% -6%, color-mix(in srgb, var(--main) 9%, transparent) 0%, transparent 60%),
+    radial-gradient(52% 46% at 6% 106%, color-mix(in srgb, var(--main) 7%, transparent) 0%, transparent 62%);
+  opacity: 0.55;
+  animation: drift 16s ease-in-out infinite;
+}
+html[data-ambient="on"] body::before {
+  opacity: 1;
+  animation-duration: 9s;
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translateY(-2%) scale(1.05);
+    opacity: 0.7;
+  }
 }
 
 button {

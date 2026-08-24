@@ -8,7 +8,7 @@ export const contentType = "image/png";
 // Home share card: the wordmark + tagline beside a mock "playground" panel -
 // a voice chip row and a waveform - in the monkeytype serika palette.
 export default function Image() {
-  const YELLOW = "#e2b714";
+  const YELLOW = "#2dd4bf"; // brand accent (turquoise)
   const BG = "#2b2d30";
   const PANEL = "#323437";
   const TEXT = "#d1d0c5";
@@ -29,7 +29,7 @@ export default function Image() {
           alignItems: "center",
           gap: 60,
           padding: "0 76px",
-          background: `radial-gradient(900px 900px at 90% 6%, rgba(226,183,20,0.14) 0%, rgba(226,183,20,0) 55%), radial-gradient(1000px 700px at 8% 120%, #34363a 0%, ${BG} 60%)`,
+          background: `radial-gradient(900px 900px at 90% 6%, rgba(45,212,191,0.16) 0%, rgba(45,212,191,0) 55%), radial-gradient(1000px 700px at 8% 120%, #34363a 0%, ${BG} 60%)`,
           color: TEXT,
           fontFamily: "monospace",
         }}
