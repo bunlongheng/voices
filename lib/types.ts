@@ -28,6 +28,16 @@ export type Settings = {
 
 export const DEFAULT_SETTINGS: Settings = { stability: 0.35, style: 0.3, speed: 1 };
 
+// Per-character alignment served from /audio/{id}.json (drives the karaoke
+// read-along). Written alongside the audio when the voice engine returns timings.
+export type AlignFile = {
+  v: number;
+  duration: number;
+  text: string;
+  starts: number[];
+  ends: number[];
+};
+
 export const mmss = (s: number) => {
   if (!isFinite(s) || s < 0) s = 0;
   const m = Math.floor(s / 60);
