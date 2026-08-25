@@ -4,13 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import type { Take } from "@/lib/types";
 import { mmss } from "@/lib/types";
 
-// The library as an Apple-Watch-style cluster of circles: one bubble per take,
-// labelled by its voice. Tap a circle to play it - a turquoise ring fills with
-// progress and the bubble lifts; tap again (or tap another) to switch. One
-// shared <audio> element plays at a time.
-const SIZE = 132;
-const R = 61; // ring radius
-const CIRC = 2 * Math.PI * R;
+// The library as an Apple-Watch honeycomb: hex-packed circles, one per take,
+// labelled by its voice. Alternate rows nest into the gaps below. Tap a circle
+// to play it - a turquoise ring fills with progress; the active take's text
+// shows as a caption under the cluster. One shared <audio> plays at a time.
+const D = 104; // circle diameter
+const GAP = 10;
+const CELL = D + GAP; // horizontal step
+const ROW = CELL * 0.86; // vertical step so rows nest (hex packing)
+const RR = D / 2 - 3; // ring radius
+const CIRC = 2 * Math.PI * RR;
 
 export default function TakeBubbles({
   takes,
@@ -23,8 +26,8 @@ export default function TakeBubbles({
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playingId, setPlayingId] = useState<number | null>(null);
-  const [progress, setProgress] = useState(0); // 0..1 for the active ring
-  const [armed, setArmed] = useState<number | null>(null); // delete confirm
+  const [progress, setProgress] = useState(0);
+  const [armed, setArmed] = useState<number | null>(null);
 
   useEffect(() => {
     const a = audioRef.current;
@@ -58,35 +61,44 @@ export default function TakeBubbles({
   };
 
   if (loading) return <div className="dim" style={{ padding: "48px 0", textAlign: "center" }}>loading takes...</div>;
-
   if (!takes.length)
-    return (
-      <div className="dim" style={{ padding: "56px 0", textAlign: "center", lineHeight: 1.6 }}>
-        No takes yet.
-      </div>
-    );
+    return <div className="dim" style={{ padding: "56px 0", textAlign: "center", lineHeight: 1.6 }}>No takes yet.</div>;
+
+  const n = takes.length;
+  const perRow = Math.max(2, Math.round(Math.sqrt(n)));
+  const rows = Math.ceil(n / perRow);
+  const width = perRow * CELL + (rows > 1 ? CELL / 2 : 0);
+  const height = (rows - 1) * ROW + D;
+  const active = takes.find((t) => t.id === playingId) || null;
+
+  const pos = (i: number) => {
+    const row = Math.floor(i / perRow);
+    const col = i % perRow;
+    return { x: col * CELL + (row % 2) * (CELL / 2), y: row * ROW };
+  };
 
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 22, justifyContent: "center", padding: "16px 0" }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 22, padding: "18px 0" }}>
       <audio ref={audioRef} preload="none" />
-      {takes.map((t) => {
-        const active = playingId === t.id;
-        return (
-          <div key={t.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, width: SIZE }}>
-            <div style={{ position: "relative", width: SIZE, height: SIZE }}>
-              {/* progress ring (only meaningful while active) */}
+
+      <div style={{ position: "relative", width, height, maxWidth: "100%" }}>
+        {takes.map((t, i) => {
+          const { x, y } = pos(i);
+          const isOn = playingId === t.id;
+          return (
+            <div key={t.id} style={{ position: "absolute", left: x, top: y, width: D, height: D }}>
               <svg
-                width={SIZE}
-                height={SIZE}
+                width={D}
+                height={D}
                 style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)", pointerEvents: "none" }}
                 aria-hidden="true"
               >
-                <circle cx={SIZE / 2} cy={SIZE / 2} r={R} fill="none" stroke="var(--sub-alt)" strokeWidth={3} />
-                {active && (
+                <circle cx={D / 2} cy={D / 2} r={RR} fill="none" stroke="var(--sub-alt)" strokeWidth={3} />
+                {isOn && (
                   <circle
-                    cx={SIZE / 2}
-                    cy={SIZE / 2}
-                    r={R}
+                    cx={D / 2}
+                    cy={D / 2}
+                    r={RR}
                     fill="none"
                     stroke="var(--main)"
                     strokeWidth={3}
@@ -101,36 +113,34 @@ export default function TakeBubbles({
               <button
                 onClick={() => toggle(t)}
                 className="focus-ring bubble"
-                aria-label={active ? `Pause ${t.voice_name || "take"}` : `Play ${t.voice_name || "take"}`}
-                aria-pressed={active}
+                aria-label={isOn ? `Pause ${t.voice_name || "take"}` : `Play ${t.voice_name || "take"}`}
+                aria-pressed={isOn}
                 style={{
                   position: "absolute",
-                  inset: 8,
+                  inset: 5,
                   borderRadius: "50%",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: 3,
-                  background: active
-                    ? "color-mix(in srgb, var(--main) 16%, var(--card))"
-                    : "var(--card)",
-                  border: `1px solid ${active ? "var(--main)" : "transparent"}`,
+                  gap: 2,
+                  background: isOn ? "color-mix(in srgb, var(--main) 18%, var(--card))" : "var(--card)",
+                  border: `1px solid ${isOn ? "var(--main)" : "transparent"}`,
                   color: "var(--text)",
                   transition: "transform 0.18s ease, background 0.2s ease, border-color 0.2s ease",
                 }}
               >
-                {active ? (
+                {isOn ? (
                   <Equalizer />
                 ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--main)" aria-hidden="true" style={{ marginBottom: 2 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--main)" aria-hidden="true">
                     <path d="M8 5v14l11-7z" />
                   </svg>
                 )}
-                <span style={{ fontWeight: 700, fontSize: 15, color: active ? "var(--main)" : "var(--text)" }}>
+                <span style={{ fontWeight: 700, fontSize: 13, color: isOn ? "var(--main)" : "var(--text)" }}>
                   {t.voice_name || "Custom"}
                 </span>
-                <span className="dim" style={{ fontSize: 11, fontVariantNumeric: "tabular-nums" }}>
+                <span className="dim" style={{ fontSize: 10, fontVariantNumeric: "tabular-nums" }}>
                   {mmss(t.duration_sec ?? 0)}
                 </span>
               </button>
@@ -144,8 +154,8 @@ export default function TakeBubbles({
                   title={armed === t.id ? "Tap again to delete" : "Delete take"}
                   style={{
                     position: "absolute",
-                    top: 2,
-                    right: 2,
+                    top: -2,
+                    left: -2,
                     width: 24,
                     height: 24,
                     borderRadius: "50%",
@@ -156,46 +166,37 @@ export default function TakeBubbles({
                     lineHeight: 1,
                     background: armed === t.id ? "var(--error)" : "var(--bg-deep)",
                     color: armed === t.id ? "#fff" : "var(--sub)",
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.35)",
                   }}
                 >
                   {armed === t.id ? "ok" : "×"}
                 </button>
               )}
             </div>
+          );
+        })}
+      </div>
 
-            {/* the take's text, clamped, under the circle */}
-            <p
-              style={{
-                margin: 0,
-                fontSize: 12,
-                lineHeight: 1.45,
-                textAlign: "center",
-                color: "var(--sub)",
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-                maxWidth: SIZE + 20,
-              }}
-            >
-              {t.text}
-            </p>
-          </div>
-        );
-      })}
+      {/* the playing take's text (or a gentle hint) as a caption under the cluster */}
+      <p
+        className="dim"
+        style={{ margin: 0, maxWidth: 460, textAlign: "center", fontSize: 13, lineHeight: 1.5, minHeight: 20, padding: "0 12px" }}
+      >
+        {active ? active.text : "tap a voice to play"}
+      </p>
     </div>
   );
 }
 
 function Equalizer() {
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 2, height: 18, marginBottom: 2 }} aria-hidden="true">
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 2, height: 16 }} aria-hidden="true">
       {[0, 1, 2, 3].map((i) => (
         <span
           key={i}
           style={{
             width: 3,
-            height: 18,
+            height: 16,
             background: "var(--main)",
             borderRadius: 2,
             transformOrigin: "center",
