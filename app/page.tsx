@@ -3,10 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Take } from "@/lib/types";
 import TakeBubbles from "@/components/TakeBubbles";
+import TakeDetail from "@/components/TakeDetail";
+import { assignColors } from "@/lib/colors";
 
 export default function App() {
   const [takes, setTakes] = useState<Take[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openId, setOpenId] = useState<number | null>(null);
   // true only when the writable local API served the data - the static Vercel
   // deploy reads takes.json, where delete just 401s. Gates the delete control.
   const [canManage, setCanManage] = useState(false);
@@ -60,6 +63,16 @@ export default function App() {
     loadTakes();
   }, [loadTakes]);
 
+  // shareable deep-link: /?take=<id> opens that take's detail
+  useEffect(() => {
+    const q = Number(new URLSearchParams(window.location.search).get("take"));
+    if (q) setOpenId(q);
+  }, []);
+
+  const colors = assignColors(takes);
+  const open = openId != null ? takes.find((t) => t.id === openId) ?? null : null;
+  if (open) return <TakeDetail take={open} color={colors[open.id]} onBack={() => setOpenId(null)} />;
+
   return (
     <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
       <header
@@ -92,7 +105,13 @@ export default function App() {
           width: "100%",
         }}
       >
-        <TakeBubbles takes={takes} loading={loading} onDelete={canManage ? deleteTake : undefined} />
+        <TakeBubbles
+          takes={takes}
+          colors={colors}
+          loading={loading}
+          onOpen={(t) => setOpenId(t.id)}
+          onDelete={canManage ? deleteTake : undefined}
+        />
       </main>
     </div>
   );
