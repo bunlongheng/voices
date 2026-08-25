@@ -96,6 +96,14 @@ export default function TakeDetail({
   const activeChar = align ? charIndexAt(align.starts, cur) : -1;
   const pct = dur ? (cur / dur) * 100 : 0;
 
+  // the whole current word is selected; auto-scroll keeps it centred (Briefly-style)
+  const activeRef = useRef<HTMLSpanElement | null>(null);
+  const activeWordCi =
+    align && activeChar >= 0 ? words.find((t) => wordState(t, activeChar) === "active")?.ci ?? -1 : -1;
+  useEffect(() => {
+    if (activeWordCi >= 0) activeRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [activeWordCi]);
+
   return (
     <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", animation: "rise 0.25s ease" }}>
       {/* back bar */}
@@ -158,37 +166,28 @@ export default function TakeDetail({
           overflowY: "auto",
         }}
       >
-        <p style={{ margin: 0, fontSize: 22, lineHeight: 1.85 }}>
+        <p style={{ margin: 0, fontSize: 23, lineHeight: 2 }}>
           {words.map((tok) => {
             const st = align ? wordState(tok, activeChar) : "done";
-            if (st !== "active") {
-              return (
-                <span
-                  key={tok.ci}
-                  onClick={() => align && seekTo(align.starts[tok.ci] ?? 0)}
-                  style={{ color: st === "future" ? "var(--sub)" : "var(--text)", cursor: align ? "pointer" : "default" }}
-                >
-                  {tok.w}{" "}
-                </span>
-              );
-            }
-            // active word: per-character caret precision
-            const typed = activeChar - tok.ci; // index of current char within the word
+            const isActive = st === "active";
             return (
-              <span key={tok.ci} onClick={() => align && seekTo(align.starts[tok.ci] ?? 0)} style={{ cursor: "pointer" }}>
-                {[...tok.w].map((ch, j) => (
-                  <span
-                    key={j}
-                    style={{
-                      background: j === typed ? color : "transparent",
-                      color: j === typed ? ink : j < typed ? "var(--text)" : "var(--sub)",
-                      borderRadius: 4,
-                      padding: j === typed ? "1px 1px" : undefined,
-                    }}
-                  >
-                    {ch}
-                  </span>
-                ))}{" "}
+              <span
+                key={tok.ci}
+                ref={isActive ? activeRef : undefined}
+                onClick={() => align && seekTo(align.starts[tok.ci] ?? 0)}
+                style={{
+                  // constant padding + negative margin so the selection box never
+                  // reflows the text as it moves word to word
+                  padding: "2px 6px",
+                  margin: "0 -4px",
+                  borderRadius: 7,
+                  color: isActive ? ink : st === "future" ? "var(--sub)" : "var(--text)",
+                  background: isActive ? color : "transparent",
+                  cursor: align ? "pointer" : "default",
+                  transition: "color 0.14s ease, background 0.14s ease",
+                }}
+              >
+                {tok.w}{" "}
               </span>
             );
           })}
