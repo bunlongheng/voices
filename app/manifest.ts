@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Voices",
     short_name: "Voices",
-    description: "A voice playground - load your own voices, type any text, and hear them speak.",
+    description: "A voice library - tap a circle to hear each voice.",
     start_url: "/",
     display: "standalone",
     background_color: "#323437",

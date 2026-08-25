@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { PREMADE } from "@/lib/voices";
 
-export const alt = "Voices - your text-to-speech playground";
+export const alt = "Voices - a text-to-speech voice library";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -42,12 +42,12 @@ export default function Image() {
             <span style={{ color: YELLOW, fontSize: 82, fontWeight: 800 }}>_</span>
           </div>
           <div style={{ display: "flex", fontSize: 44, fontWeight: 800, color: "#fff", marginTop: 22, lineHeight: 1.1, letterSpacing: -1 }}>
-            Load your own voices. Hear any text spoken.
+            Every voice is a tap away.
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", fontSize: 25, color: TEXT, marginTop: 16, lineHeight: 1.45, maxWidth: 520 }}>
-            <span>Compare tone, pacing, and delivery, then </span>
-            <span style={{ color: YELLOW }}>&nbsp;save the takes&nbsp;</span>
-            <span> you like.</span>
+            <span>A library of takes as circles - tap one to </span>
+            <span style={{ color: YELLOW }}>&nbsp;hear the voice&nbsp;</span>
+            <span> and compare.</span>
           </div>
         </div>
 

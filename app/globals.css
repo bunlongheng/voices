@@ -141,6 +141,15 @@ select {
   border-radius: 6px;
 }
 
+/* apple-watch-style voice bubbles: gentle spring on hover/press */
+.bubble:hover {
+  transform: scale(1.05);
+  border-color: color-mix(in srgb, var(--main) 55%, transparent) !important;
+}
+.bubble:active {
+  transform: scale(0.97);
+}
+
 @keyframes blink {
   0%,
   100% {

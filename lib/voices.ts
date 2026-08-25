@@ -18,7 +18,3 @@ export const PREMADE: PremadeVoice[] = [
 // The server resolves VOICES_DEFAULT_ID over this in the API route.
 export const FALLBACK_VOICE = PREMADE[0].id;
 export const premadeName = (id: string) => PREMADE.find((v) => v.id === id)?.name || "Custom";
-
-// A short line of text to warm up a voice with a single click.
-export const SAMPLE_TEXT =
-  "Hey, this is a quick test of how this voice sounds. Notice the warmth, the pacing, and how natural it feels read aloud.";

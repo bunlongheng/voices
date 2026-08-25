@@ -1,8 +1,8 @@
 # Voices
 
-A text-to-speech playground. Load your own voices, type any text, and hear it read aloud - compare tone, pacing, and delivery side by side, then save the takes you like.
+A voice library. Every text-to-speech take is a tappable circle - Apple-Watch style - labelled by its voice. Tap to play, watch the turquoise ring fill, and compare voices at a glance. Takes are synthesized with ElevenLabs (server-side) and served as static audio.
 
-![Voices playground](docs/screenshots/playground.png)
+![Voices library](docs/screenshots/library.png)
 
 [![CI](https://github.com/bunlongheng/voices/actions/workflows/ci.yml/badge.svg)](https://github.com/bunlongheng/voices/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -25,12 +25,12 @@ Live: [voices-bheng.vercel.app](https://voices-bheng.vercel.app)
 
 ## Features
 
-- Pick any voice, type or paste text, and hear it spoken with real narration (ElevenLabs)
-- Load your **own** voices by ElevenLabs voice id and test them right beside the presets
-- Tune delivery live: stability, style, and speed sliders per take
-- Every synthesis is saved to a library with its own scrubbable player - compare takes
-- Long text is chunked on sentence boundaries and stitched back into one seamless track
-- Light + dark themes, mobile-first, installable (PWA), shareable tab links (`/?tab=library`)
+- Voice takes shown as Apple-Watch-style circles - tap one to play, tap again to pause
+- A turquoise progress ring fills as the take plays; only one plays at a time
+- Real narration from ElevenLabs, synthesized server-side (long text is chunked on
+  sentence boundaries and stitched into one seamless track)
+- A soft, optional ambient pad that "settles in the back" (Web Audio, no audio file)
+- Light + dark themes, mobile-first, installable (PWA)
 - Read-only static deploy: the app ships a committed `takes.json` + audio, so it needs no
   writable database on serverless
 
@@ -62,11 +62,11 @@ needs no database.
 
 ```mermaid
 flowchart LR
-    P["Playground (React)<br/>voice + text + sliders"] -->|POST / GET| A["Next API<br/>/api/takes, /api/voices"]
+    L["TakeBubbles (React)<br/>voice circles + audio"] -->|GET list| A["Next API<br/>/api/takes, /api/voices"]
     A -->|synthesize| E["ElevenLabs<br/>text-to-speech"]
     A -->|insert / query| S["SQLite<br/>takes + voices (local)"]
     A -->|write mp3 + manifest| F["public/ static<br/>mp3 + takes.json + voices.json"]
-    P -.->|GET audio + *.json| F
+    L -.->|GET audio + *.json| F
 ```
 
 | Module | Role |
@@ -76,8 +76,8 @@ flowchart LR
 | `lib/audio.ts` | audio file paths + public URLs (separate from the DB) |
 | `lib/auth.ts` / `lib/rate-limit.ts` | write gate (local/LAN or bearer) + per-caller synth limit (tested) |
 | `lib/voices.ts` | curated premade voices + helpers (tested) |
-| `components/Playground.tsx` | voice picker + text + settings + speak |
-| `components/Player.tsx` / `TakeList.tsx` | scrubbable audio + saved-take library |
+| `components/TakeBubbles.tsx` | the library as tappable voice circles + playback |
+| `components/Ambient.tsx` | optional Web Audio ambient pad |
 | `app/api/takes`, `app/api/voices` | create (synthesize) + list + delete |
 
 ## Tech stack
@@ -98,10 +98,16 @@ cp .env.example .env.local   # add your ELEVENLABS_API_KEY
 npm run dev                  # http://localhost:3037
 ```
 
-Open the app, pick a voice, type something, and press **speak**. To test one of your own
-ElevenLabs voices, go to the **voices** tab and load it by id.
+Open the app to browse the voice library. New takes are synthesized server-side through
+`POST /api/takes` (needs `ELEVENLABS_API_KEY`); the deployed site is read-only and plays
+the committed sample takes.
 
-![Library](docs/screenshots/library.png)
+```bash
+# synthesize a take locally
+curl -X POST http://localhost:3037/api/takes \
+  -H 'content-type: application/json' \
+  -d '{"text":"Hello from Voices","voice_id":"21m00Tcm4TlvDq8ikWAM"}'
+```
 
 ## Configuration
 

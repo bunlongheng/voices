@@ -8,20 +8,20 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE),
   title: "Voices",
   description:
-    "A voice playground. Load your own voices, type any text, and hear them speak - compare tone, pacing, and delivery side by side.",
+    "A voice library. Every text-to-speech take is a tappable circle, labelled by its voice - tap to play and compare voices at a glance.",
   manifest: "/manifest.webmanifest",
   openGraph: {
-    title: "Voices - your text-to-speech playground",
+    title: "Voices - a text-to-speech voice library",
     description:
-      "Load your own voices, type any text, and hear them read it aloud. Compare tone, pacing, and delivery, then save the takes you like.",
+      "Every voice take is a tappable circle - tap to play, watch the ring fill, and compare voices at a glance.",
     siteName: "Voices",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Voices - your text-to-speech playground",
+    title: "Voices - a text-to-speech voice library",
     description:
-      "Load your own voices, type any text, and hear them read it aloud. Compare tone, pacing, and delivery, then save the takes you like.",
+      "Every voice take is a tappable circle - tap to play, watch the ring fill, and compare voices at a glance.",
   },
   appleWebApp: { capable: true, title: "Voices", statusBarStyle: "black-translucent" },
   other: { "apple-mobile-web-app-capable": "yes" },

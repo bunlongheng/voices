@@ -34,6 +34,6 @@ All three must pass. A `pre-push` git hook runs typecheck + tests automatically.
 | Path | What lives there |
 | --- | --- |
 | `lib/` | pure logic: TTS, db, auth, voices, manifest |
-| `components/` | React UI (playground, player, voice picker, take list) |
+| `components/` | React UI (voice-circle library, ambient pad, theme toggle) |
 | `app/` | Next.js routes + API |
 | `tests/` | Vitest unit tests |
