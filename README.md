@@ -1,6 +1,6 @@
 # Voices
 
-A voice library. Every text-to-speech take is a tappable circle - Apple-Watch style - labelled by its voice. Tap to play, watch the turquoise ring fill, and compare voices at a glance. Takes are synthesized with ElevenLabs (server-side) and served as static audio.
+A voice library on a pure-black canvas. Every text-to-speech take is a vibrant circle - Apple-Watch style - its colour derived from the voice. Tap to play, watch a white ring fill, and compare voices at a glance. Takes are synthesized with ElevenLabs (server-side) and served as static audio.
 
 ![Voices library](docs/screenshots/library.png)
 
@@ -25,12 +25,13 @@ Live: [voices-bheng.vercel.app](https://voices-bheng.vercel.app)
 
 ## Features
 
-- Voice takes shown as Apple-Watch-style circles - tap one to play, tap again to pause
-- A turquoise progress ring fills as the take plays; only one plays at a time
+- Voice takes shown as vibrant Apple-Watch-style circles on pure black - each voice keeps
+  a stable colour, and the circles gently float, waiting to be tapped
+- Tap a circle to play, tap again to pause; a white progress ring fills, one plays at a time
 - Real narration from ElevenLabs, synthesized server-side (long text is chunked on
   sentence boundaries and stitched into one seamless track)
-- A soft, optional ambient pad that "settles in the back" (Web Audio, no audio file)
-- Light + dark themes, mobile-first, installable (PWA)
+- Hex-packed honeycomb layout that nests as more takes are added
+- Minimal, single black theme; mobile-first, installable (PWA)
 - Read-only static deploy: the app ships a committed `takes.json` + audio, so it needs no
   writable database on serverless
 
@@ -76,14 +77,13 @@ flowchart LR
 | `lib/audio.ts` | audio file paths + public URLs (separate from the DB) |
 | `lib/auth.ts` / `lib/rate-limit.ts` | write gate (local/LAN or bearer) + per-caller synth limit (tested) |
 | `lib/voices.ts` | curated premade voices + helpers (tested) |
-| `components/TakeBubbles.tsx` | the library as tappable voice circles + playback |
-| `components/Ambient.tsx` | optional Web Audio ambient pad |
+| `components/TakeBubbles.tsx` | the library as an Apple-Watch honeycomb of voice circles |
 | `app/api/takes`, `app/api/voices` | create (synthesize) + list + delete |
 
 ## Tech stack
 
 - **Next.js 16** (App Router, Turbopack) + **React 19** + **TypeScript** (strict)
-- **Tailwind CSS v4** for the reset + base layer; the UI is styled with CSS custom properties (the serika theme) and scoped inline styles
+- **Tailwind CSS v4** for the reset + base layer; the UI is styled with CSS custom properties and scoped inline styles
 - **better-sqlite3** for local storage; a static `public/takes.json` manifest for serverless
 - **ElevenLabs** text-to-speech
 - **Vitest** + **Testing Library** for unit tests

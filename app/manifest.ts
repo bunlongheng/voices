@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "A voice library - tap a circle to hear each voice.",
     start_url: "/",
     display: "standalone",
-    background_color: "#323437",
-    theme_color: "#323437",
+    background_color: "#000000",
+    theme_color: "#000000",
     icons: [
       { src: "/icon.png", sizes: "512x512", type: "image/png" },
       { src: "/icon.png", sizes: "192x192", type: "image/png" },

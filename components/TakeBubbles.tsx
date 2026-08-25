@@ -4,16 +4,47 @@ import { useEffect, useRef, useState } from "react";
 import type { Take } from "@/lib/types";
 import { mmss } from "@/lib/types";
 
-// The library as an Apple-Watch honeycomb: hex-packed circles, one per take,
-// labelled by its voice. Alternate rows nest into the gaps below. Tap a circle
-// to play it - a turquoise ring fills with progress; the active take's text
-// shows as a caption under the cluster. One shared <audio> plays at a time.
+// The library as an Apple-Watch honeycomb on pure black. Each take is a solid
+// vibrant circle - its colour derived from the voice, so a voice is always the
+// same colour. Circles gently float, waiting to be tapped. Tap one to play (a
+// white ring fills with progress); tap again to pause. One <audio> at a time.
 const D = 104; // circle diameter
 const GAP = 10;
-const CELL = D + GAP; // horizontal step
-const ROW = CELL * 0.86; // vertical step so rows nest (hex packing)
-const RR = D / 2 - 3; // ring radius
+const CELL = D + GAP;
+const ROW = CELL * 0.86; // hex packing: rows nest into the gaps below
+const RR = D / 2 - 3;
 const CIRC = 2 * Math.PI * RR;
+
+// vibrant Apple-Watch-style colours (no turquoise). A voice maps to one stably.
+const PALETTE = [
+  "#ff453a", // red
+  "#ff9f0a", // orange
+  "#ffd60a", // yellow
+  "#32d74b", // green
+  "#0a84ff", // blue
+  "#5e5ce6", // indigo
+  "#bf5af2", // purple
+  "#ff2d55", // pink
+  "#ff375f", // rose
+  "#ac8e68", // tan
+  "#64d2ff", // sky
+  "#30d158", // mint-green
+];
+
+function colorFor(key: string): string {
+  let h = 0;
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+  return PALETTE[h % PALETTE.length];
+}
+
+// black or white glyph, whichever reads on the circle's colour
+function inkOn(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return lum > 0.6 ? "#0a0a0a" : "#ffffff";
+}
 
 export default function TakeBubbles({
   takes,
@@ -60,9 +91,10 @@ export default function TakeBubbles({
       .catch(() => setPlayingId(null));
   };
 
-  if (loading) return <div className="dim" style={{ padding: "48px 0", textAlign: "center" }}>loading takes...</div>;
+  if (loading)
+    return <div className="dim" style={{ margin: "auto", padding: "48px 0" }}>loading takes...</div>;
   if (!takes.length)
-    return <div className="dim" style={{ padding: "56px 0", textAlign: "center", lineHeight: 1.6 }}>No takes yet.</div>;
+    return <div className="dim" style={{ margin: "auto", padding: "56px 0", textAlign: "center" }}>No takes yet.</div>;
 
   const n = takes.length;
   const perRow = Math.max(2, Math.round(Math.sqrt(n)));
@@ -78,35 +110,50 @@ export default function TakeBubbles({
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 22, padding: "18px 0" }}>
+    <div style={{ margin: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 24, padding: "12px 0 24px" }}>
       <audio ref={audioRef} preload="none" />
 
       <div style={{ position: "relative", width, height, maxWidth: "100%" }}>
         {takes.map((t, i) => {
           const { x, y } = pos(i);
           const isOn = playingId === t.id;
+          const color = colorFor(t.voice_name || String(t.voice_id) || String(t.id));
+          const ink = inkOn(color);
           return (
-            <div key={t.id} style={{ position: "absolute", left: x, top: y, width: D, height: D }}>
+            <div
+              key={t.id}
+              style={{
+                position: "absolute",
+                left: x,
+                top: y,
+                width: D,
+                height: D,
+                animation: isOn ? "none" : `float ${3 + (i % 4) * 0.4}s ease-in-out ${(i % 5) * 0.35}s infinite`,
+              }}
+            >
+              {/* progress ring - white, only meaningful while playing */}
               <svg
                 width={D}
                 height={D}
                 style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)", pointerEvents: "none" }}
                 aria-hidden="true"
               >
-                <circle cx={D / 2} cy={D / 2} r={RR} fill="none" stroke="var(--sub-alt)" strokeWidth={3} />
                 {isOn && (
-                  <circle
-                    cx={D / 2}
-                    cy={D / 2}
-                    r={RR}
-                    fill="none"
-                    stroke="var(--main)"
-                    strokeWidth={3}
-                    strokeLinecap="round"
-                    strokeDasharray={CIRC}
-                    strokeDashoffset={CIRC * (1 - progress)}
-                    style={{ transition: "stroke-dashoffset 0.2s linear" }}
-                  />
+                  <>
+                    <circle cx={D / 2} cy={D / 2} r={RR} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth={3} />
+                    <circle
+                      cx={D / 2}
+                      cy={D / 2}
+                      r={RR}
+                      fill="none"
+                      stroke="#fff"
+                      strokeWidth={3}
+                      strokeLinecap="round"
+                      strokeDasharray={CIRC}
+                      strokeDashoffset={CIRC * (1 - progress)}
+                      style={{ transition: "stroke-dashoffset 0.2s linear" }}
+                    />
+                  </>
                 )}
               </svg>
 
@@ -124,23 +171,23 @@ export default function TakeBubbles({
                   alignItems: "center",
                   justifyContent: "center",
                   gap: 2,
-                  background: isOn ? "color-mix(in srgb, var(--main) 18%, var(--card))" : "var(--card)",
-                  border: `1px solid ${isOn ? "var(--main)" : "transparent"}`,
-                  color: "var(--text)",
-                  transition: "transform 0.18s ease, background 0.2s ease, border-color 0.2s ease",
+                  background: color,
+                  color: ink,
+                  boxShadow: isOn ? `0 0 22px ${color}88` : "none",
                 }}
               >
                 {isOn ? (
-                  <Equalizer />
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill={ink} aria-hidden="true">
+                    <rect x="6" y="5" width="4" height="14" rx="1" />
+                    <rect x="14" y="5" width="4" height="14" rx="1" />
+                  </svg>
                 ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--main)" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill={ink} aria-hidden="true">
                     <path d="M8 5v14l11-7z" />
                   </svg>
                 )}
-                <span style={{ fontWeight: 700, fontSize: 13, color: isOn ? "var(--main)" : "var(--text)" }}>
-                  {t.voice_name || "Custom"}
-                </span>
-                <span className="dim" style={{ fontSize: 10, fontVariantNumeric: "tabular-nums" }}>
+                <span style={{ fontWeight: 700, fontSize: 13 }}>{t.voice_name || "Custom"}</span>
+                <span style={{ fontSize: 10, opacity: 0.7, fontVariantNumeric: "tabular-nums" }}>
                   {mmss(t.duration_sec ?? 0)}
                 </span>
               </button>
@@ -164,9 +211,9 @@ export default function TakeBubbles({
                     fontSize: armed === t.id ? 11 : 15,
                     fontWeight: 700,
                     lineHeight: 1,
-                    background: armed === t.id ? "var(--error)" : "var(--bg-deep)",
-                    color: armed === t.id ? "#fff" : "var(--sub)",
-                    boxShadow: "0 1px 4px rgba(0,0,0,0.35)",
+                    background: armed === t.id ? "var(--error)" : "#1c1c1e",
+                    color: "#fff",
+                    boxShadow: "0 1px 5px rgba(0,0,0,0.6)",
                   }}
                 >
                   {armed === t.id ? "ok" : "×"}
@@ -177,7 +224,7 @@ export default function TakeBubbles({
         })}
       </div>
 
-      {/* the playing take's text (or a gentle hint) as a caption under the cluster */}
+      {/* the playing take's text (or a gentle hint) under the cluster */}
       <p
         className="dim"
         style={{ margin: 0, maxWidth: 460, textAlign: "center", fontSize: 13, lineHeight: 1.5, minHeight: 20, padding: "0 12px" }}
@@ -185,25 +232,5 @@ export default function TakeBubbles({
         {active ? active.text : "tap a voice to play"}
       </p>
     </div>
-  );
-}
-
-function Equalizer() {
-  return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 2, height: 16 }} aria-hidden="true">
-      {[0, 1, 2, 3].map((i) => (
-        <span
-          key={i}
-          style={{
-            width: 3,
-            height: 16,
-            background: "var(--main)",
-            borderRadius: 2,
-            transformOrigin: "center",
-            animation: `eq 0.8s ease-in-out ${i * 0.12}s infinite`,
-          }}
-        />
-      ))}
-    </span>
   );
 }
