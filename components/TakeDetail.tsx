@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { AlignFile, Take } from "@/lib/types";
 import { mmss } from "@/lib/types";
 import { inkOn } from "@/lib/colors";
-import { buildWords, charIndexAt, wordState } from "@/lib/karaoke";
+import { buildWords } from "@/lib/karaoke";
 
 const RATES = [1, 1.25, 1.5, 1.75, 2, 0.75];
 
@@ -93,13 +93,21 @@ export default function TakeDetail({
   };
 
   const words = useMemo(() => (align ? buildWords(align.text) : buildWords(take.text)), [align, take.text]);
-  const activeChar = align ? charIndexAt(align.starts, cur) : -1;
   const pct = dur ? (cur / dur) * 100 : 0;
 
-  // the whole current word is selected; auto-scroll keeps it centred (Briefly-style)
+  // Current word = the last word whose start time has passed, so the selection
+  // never vanishes in the gap between words (that gap was the "blinking"). We
+  // light a 3-word comet: the word just finished + the current + the next, so
+  // the highlight glides instead of snapping.
   const activeRef = useRef<HTMLSpanElement | null>(null);
-  const activeWordCi =
-    align && activeChar >= 0 ? words.find((t) => wordState(t, activeChar) === "active")?.ci ?? -1 : -1;
+  let activeIdx = -1;
+  if (align) {
+    for (let i = 0; i < words.length; i++) {
+      if ((align.starts[words[i].ci] ?? Infinity) <= cur) activeIdx = i;
+      else break;
+    }
+  }
+  const activeWordCi = activeIdx >= 0 ? words[activeIdx].ci : -1;
   useEffect(() => {
     if (activeWordCi >= 0) activeRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [activeWordCi]);
@@ -167,24 +175,44 @@ export default function TakeDetail({
         }}
       >
         <p style={{ margin: 0, fontSize: 23, lineHeight: 2 }}>
-          {words.map((tok) => {
-            const st = align ? wordState(tok, activeChar) : "done";
-            const isActive = st === "active";
+          {words.map((tok, i) => {
+            // role in the reading comet
+            const role = !align
+              ? "done"
+              : activeIdx < 0
+                ? "future"
+                : i === activeIdx
+                  ? "current"
+                  : i === activeIdx - 1
+                    ? "prev"
+                    : i === activeIdx + 1
+                      ? "next"
+                      : i < activeIdx
+                        ? "done"
+                        : "future";
+            const isCurrent = role === "current";
+            const textColor = isCurrent
+              ? ink
+              : role === "prev" || role === "next"
+                ? color // just-finished + upcoming word glow in the voice colour
+                : role === "future"
+                  ? "var(--sub)"
+                  : "var(--text)";
             return (
               <span
                 key={tok.ci}
-                ref={isActive ? activeRef : undefined}
+                ref={isCurrent ? activeRef : undefined}
                 onClick={() => align && seekTo(align.starts[tok.ci] ?? 0)}
                 style={{
-                  // constant padding + negative margin so the selection box never
-                  // reflows the text as it moves word to word
+                  // constant padding + negative margin so the selection never reflows text
                   padding: "2px 6px",
                   margin: "0 -4px",
                   borderRadius: 7,
-                  color: isActive ? ink : st === "future" ? "var(--sub)" : "var(--text)",
-                  background: isActive ? color : "transparent",
+                  color: textColor,
+                  background: isCurrent ? color : "transparent",
                   cursor: align ? "pointer" : "default",
-                  transition: "color 0.14s ease, background 0.14s ease",
+                  // slow fade so the highlight glides in / out instead of blinking
+                  transition: "color 0.3s ease, background 0.3s ease",
                 }}
               >
                 {tok.w}{" "}
