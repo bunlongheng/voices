@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { AlignFile, Take } from "@/lib/types";
 import { mmss } from "@/lib/types";
 import { inkOn } from "@/lib/colors";
-import { buildWords } from "@/lib/karaoke";
+import { buildWords, charIndexAt, wordState } from "@/lib/karaoke";
 
 const RATES = [1, 1.25, 1.5, 1.75, 2, 0.75];
 
@@ -93,21 +93,13 @@ export default function TakeDetail({
   };
 
   const words = useMemo(() => (align ? buildWords(align.text) : buildWords(take.text)), [align, take.text]);
+  const activeChar = align ? charIndexAt(align.starts, cur) : -1;
   const pct = dur ? (cur / dur) * 100 : 0;
 
-  // Current word = the last word whose start time has passed, so the selection
-  // never vanishes in the gap between words (that gap was the "blinking"). We
-  // light a 3-word comet: the word just finished + the current + the next, so
-  // the highlight glides instead of snapping.
+  // keep the active word centred on screen as it reads (Briefly-style)
   const activeRef = useRef<HTMLSpanElement | null>(null);
-  let activeIdx = -1;
-  if (align) {
-    for (let i = 0; i < words.length; i++) {
-      if ((align.starts[words[i].ci] ?? Infinity) <= cur) activeIdx = i;
-      else break;
-    }
-  }
-  const activeWordCi = activeIdx >= 0 ? words[activeIdx].ci : -1;
+  const activeWordCi =
+    align && activeChar >= 0 ? words.find((t) => wordState(t, activeChar) === "active")?.ci ?? -1 : -1;
   useEffect(() => {
     if (activeWordCi >= 0) activeRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [activeWordCi]);
@@ -174,48 +166,51 @@ export default function TakeDetail({
           overflowY: "auto",
         }}
       >
-        <p style={{ margin: 0, fontSize: 23, lineHeight: 2 }}>
-          {words.map((tok, i) => {
-            // role in the reading comet
-            const role = !align
-              ? "done"
-              : activeIdx < 0
-                ? "future"
-                : i === activeIdx
-                  ? "current"
-                  : i === activeIdx - 1
-                    ? "prev"
-                    : i === activeIdx + 1
-                      ? "next"
-                      : i < activeIdx
-                        ? "done"
-                        : "future";
-            const isCurrent = role === "current";
-            const textColor = isCurrent
-              ? ink
-              : role === "prev" || role === "next"
-                ? color // just-finished + upcoming word glow in the voice colour
-                : role === "future"
-                  ? "var(--sub)"
-                  : "var(--text)";
+        <p style={{ margin: 0, fontSize: "clamp(18px, 2.5vw, 27px)", lineHeight: 1.85, fontWeight: 500 }}>
+          {words.map((tok) => {
+            const st = align ? wordState(tok, activeChar) : "done";
+            if (st !== "active") {
+              return (
+                <span
+                  key={tok.ci}
+                  onClick={() => align && seekTo(align.starts[tok.ci] ?? 0)}
+                  className="kw"
+                  style={{ color: st === "future" ? "var(--sub)" : "var(--text)" }}
+                >
+                  {tok.w}{" "}
+                </span>
+              );
+            }
+            // active word: per-character read-along with a blinking caret (Briefly)
+            const typed = activeChar - tok.ci; // index of the character being spoken
             return (
-              <span
-                key={tok.ci}
-                ref={isCurrent ? activeRef : undefined}
-                onClick={() => align && seekTo(align.starts[tok.ci] ?? 0)}
-                style={{
-                  // constant padding + negative margin so the selection never reflows text
-                  padding: "2px 6px",
-                  margin: "0 -4px",
-                  borderRadius: 7,
-                  color: textColor,
-                  background: isCurrent ? color : "transparent",
-                  cursor: align ? "pointer" : "default",
-                  // slow fade so the highlight glides in / out instead of blinking
-                  transition: "color 0.3s ease, background 0.3s ease",
-                }}
-              >
-                {tok.w}{" "}
+              <span key={tok.ci} ref={activeRef} onClick={() => align && seekTo(align.starts[tok.ci] ?? 0)} className="kw">
+                {[...tok.w].map((ch, j) => (
+                  <span
+                    key={j}
+                    style={{
+                      position: "relative",
+                      color: j === typed ? color : j < typed ? "var(--text)" : "var(--sub)",
+                    }}
+                  >
+                    {j === typed && (
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          position: "absolute",
+                          left: "-0.09em",
+                          top: "0.08em",
+                          width: "0.09em",
+                          height: "1.15em",
+                          background: color,
+                          borderRadius: 2,
+                          animation: "blink 1s step-end infinite",
+                        }}
+                      />
+                    )}
+                    {ch}
+                  </span>
+                ))}{" "}
               </span>
             );
           })}

@@ -74,6 +74,24 @@ button {
   border-radius: 6px;
 }
 
+/* karaoke read-along (Briefly-style): smooth per-word colour + a blinking caret */
+.kw {
+  transition: color 0.12s ease;
+  cursor: pointer;
+}
+.kw:hover {
+  color: var(--accent) !important;
+}
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
 /* each voice circle gently floats, waiting to be tapped */
 @keyframes float {
   0%,
