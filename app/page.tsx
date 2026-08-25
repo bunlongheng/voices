@@ -71,7 +71,22 @@ export default function App() {
 
   const colors = assignColors(takes);
   const open = openId != null ? takes.find((t) => t.id === openId) ?? null : null;
-  if (open) return <TakeDetail take={open} color={colors[open.id]} onBack={() => setOpenId(null)} />;
+  if (open)
+    return (
+      <TakeDetail
+        take={open}
+        color={colors[open.id]}
+        onBack={() => setOpenId(null)}
+        onDelete={
+          canManage
+            ? async (id) => {
+                await deleteTake(id);
+                setOpenId(null);
+              }
+            : undefined
+        }
+      />
+    );
 
   return (
     <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
@@ -105,13 +120,7 @@ export default function App() {
           width: "100%",
         }}
       >
-        <TakeBubbles
-          takes={takes}
-          colors={colors}
-          loading={loading}
-          onOpen={(t) => setOpenId(t.id)}
-          onDelete={canManage ? deleteTake : undefined}
-        />
+        <TakeBubbles takes={takes} colors={colors} loading={loading} onOpen={(t) => setOpenId(t.id)} />
       </main>
     </div>
   );

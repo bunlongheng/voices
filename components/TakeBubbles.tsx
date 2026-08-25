@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import type { Take } from "@/lib/types";
 import { mmss } from "@/lib/types";
 import { inkOn } from "@/lib/colors";
@@ -18,16 +17,12 @@ export default function TakeBubbles({
   colors,
   loading,
   onOpen,
-  onDelete,
 }: {
   takes: Take[];
   colors: Record<number, string>;
   loading: boolean;
   onOpen: (take: Take) => void;
-  onDelete?: (id: number) => void;
 }) {
-  const [armed, setArmed] = useState<number | null>(null);
-
   if (loading) return <div className="dim" style={{ margin: "auto", padding: "48px 0" }}>loading takes...</div>;
   if (!takes.length)
     return <div className="dim" style={{ margin: "auto", padding: "56px 0", textAlign: "center" }}>No takes yet.</div>;
@@ -88,34 +83,6 @@ export default function TakeBubbles({
                   {t.engine || mmss(t.duration_sec ?? 0)}
                 </span>
               </button>
-
-              {onDelete && (
-                <button
-                  onClick={() => (armed === t.id ? onDelete(t.id) : setArmed(t.id))}
-                  onBlur={() => setArmed((a) => (a === t.id ? null : a))}
-                  className="focus-ring"
-                  aria-label={armed === t.id ? "Confirm delete" : "Delete take"}
-                  title={armed === t.id ? "Tap again to delete" : "Delete take"}
-                  style={{
-                    position: "absolute",
-                    top: -2,
-                    left: -2,
-                    width: 24,
-                    height: 24,
-                    borderRadius: "50%",
-                    display: "grid",
-                    placeItems: "center",
-                    fontSize: armed === t.id ? 11 : 15,
-                    fontWeight: 700,
-                    lineHeight: 1,
-                    background: armed === t.id ? "var(--error)" : "#1c1c1e",
-                    color: "#fff",
-                    boxShadow: "0 1px 5px rgba(0,0,0,0.6)",
-                  }}
-                >
-                  {armed === t.id ? "ok" : "×"}
-                </button>
-              )}
             </div>
           );
         })}

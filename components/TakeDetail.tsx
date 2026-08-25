@@ -8,16 +8,29 @@ import { buildWords, charIndexAt, wordState } from "@/lib/karaoke";
 
 const RATES = [1, 1.25, 1.5, 1.75, 2, 0.75];
 
-// Full-screen detail for one take: the voice, the text with a karaoke read-along
-// (when alignment exists), and a Briefly-style transport. Colour-matched to the
-// take's voice. Reached by tapping a circle in the honeycomb.
-export default function TakeDetail({ take, color, onBack }: { take: Take; color: string; onBack: () => void }) {
+// Full-screen detail for one take: the voice, the text with a per-character
+// karaoke read-along (when alignment exists), and a Briefly-style transport.
+// The highlight is driven by requestAnimationFrame reading the audio clock every
+// frame, so it tracks the spoken word to the millisecond - not the ~4Hz
+// `timeupdate` event.
+export default function TakeDetail({
+  take,
+  color,
+  onBack,
+  onDelete,
+}: {
+  take: Take;
+  color: string;
+  onBack: () => void;
+  onDelete?: (id: number) => void;
+}) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [cur, setCur] = useState(0);
   const [dur, setDur] = useState(take.duration_sec ?? 0);
   const [rate, setRate] = useState(1);
   const [align, setAlign] = useState<AlignFile | null>(null);
+  const [confirmDel, setConfirmDel] = useState(false);
 
   const ink = inkOn(color);
 
@@ -33,18 +46,27 @@ export default function TakeDetail({ take, color, onBack }: { take: Take; color:
     };
   }, [take.id]);
 
+  // per-frame clock: smooth, millisecond-accurate karaoke + scrubber
+  useEffect(() => {
+    let raf = 0;
+    const tick = () => {
+      const a = audioRef.current;
+      if (a) setCur(a.currentTime);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;
-    const onTime = () => setCur(a.currentTime);
     const onMeta = () => setDur(a.duration || 0);
     const onEnd = () => setPlaying(false);
-    a.addEventListener("timeupdate", onTime);
     a.addEventListener("loadedmetadata", onMeta);
     a.addEventListener("ended", onEnd);
     a.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
     return () => {
-      a.removeEventListener("timeupdate", onTime);
       a.removeEventListener("loadedmetadata", onMeta);
       a.removeEventListener("ended", onEnd);
     };
@@ -102,9 +124,26 @@ export default function TakeDetail({ take, color, onBack }: { take: Take; color:
           </svg>
           voices
         </button>
-        <span style={{ marginLeft: "auto", display: "flex", alignItems: "baseline", gap: 8 }}>
+
+        <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontWeight: 700, fontSize: 16, color }}>{take.voice_name || "Custom"}</span>
           {take.engine && <span className="dim" style={{ fontSize: 12 }}>{take.engine}</span>}
+          {onDelete && (
+            <button
+              onClick={() => (confirmDel ? onDelete(take.id) : setConfirmDel(true))}
+              onBlur={() => setConfirmDel(false)}
+              className="focus-ring"
+              aria-label={confirmDel ? "Confirm delete" : "Delete take"}
+              title={confirmDel ? "Tap again to delete" : "Delete take"}
+              style={{ color: confirmDel ? "var(--error)" : "var(--sub)", fontSize: confirmDel ? 12 : 16, fontWeight: 700, padding: "4px 6px" }}
+            >
+              {confirmDel ? "delete?" : (
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
+                </svg>
+              )}
+            </button>
+          )}
         </span>
       </div>
 
@@ -122,21 +161,34 @@ export default function TakeDetail({ take, color, onBack }: { take: Take; color:
         <p style={{ margin: 0, fontSize: 22, lineHeight: 1.85 }}>
           {words.map((tok) => {
             const st = align ? wordState(tok, activeChar) : "done";
-            const c = st === "future" ? "var(--sub)" : "var(--text)";
+            if (st !== "active") {
+              return (
+                <span
+                  key={tok.ci}
+                  onClick={() => align && seekTo(align.starts[tok.ci] ?? 0)}
+                  style={{ color: st === "future" ? "var(--sub)" : "var(--text)", cursor: align ? "pointer" : "default" }}
+                >
+                  {tok.w}{" "}
+                </span>
+              );
+            }
+            // active word: per-character caret precision
+            const typed = activeChar - tok.ci; // index of current char within the word
             return (
-              <span
-                key={tok.ci}
-                onClick={() => align && seekTo(align.starts[tok.ci] ?? 0)}
-                style={{
-                  cursor: align ? "pointer" : "default",
-                  background: st === "active" ? color : "transparent",
-                  color: st === "active" ? ink : c,
-                  borderRadius: 5,
-                  padding: st === "active" ? "1px 4px" : undefined,
-                  transition: "background 0.1s linear",
-                }}
-              >
-                {tok.w}{" "}
+              <span key={tok.ci} onClick={() => align && seekTo(align.starts[tok.ci] ?? 0)} style={{ cursor: "pointer" }}>
+                {[...tok.w].map((ch, j) => (
+                  <span
+                    key={j}
+                    style={{
+                      background: j === typed ? color : "transparent",
+                      color: j === typed ? ink : j < typed ? "var(--text)" : "var(--sub)",
+                      borderRadius: 4,
+                      padding: j === typed ? "1px 1px" : undefined,
+                    }}
+                  >
+                    {ch}
+                  </span>
+                ))}{" "}
               </span>
             );
           })}
@@ -155,7 +207,6 @@ export default function TakeDetail({ take, color, onBack }: { take: Take; color:
         <div style={{ maxWidth: 640, margin: "0 auto" }}>
           <audio ref={audioRef} src={`/audio/${take.id}.mp3`} preload="metadata" />
 
-          {/* scrubber */}
           <div
             onClick={(e) => {
               const r = e.currentTarget.getBoundingClientRect();
@@ -184,7 +235,6 @@ export default function TakeDetail({ take, color, onBack }: { take: Take; color:
             <span className="dim" style={{ fontSize: 12 }}>{mmss(dur)}</span>
           </div>
 
-          {/* controls: rate | back 10 | play | fwd 10 */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "clamp(18px, 6vw, 44px)", marginTop: 6 }}>
             <button
               onClick={() => applyRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length])}
