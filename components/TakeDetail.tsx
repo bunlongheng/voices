@@ -217,13 +217,16 @@ export default function TakeDetail({
         </p>
       </main>
 
-      {/* Briefly-style transport */}
+      {/* Briefly-style transport - fixed to the viewport bottom, always visible */}
       <div
         style={{
-          position: "sticky",
+          position: "fixed",
+          left: 0,
+          right: 0,
           bottom: 0,
-          background: "linear-gradient(to top, #000 68%, transparent)",
-          padding: "16px 22px calc(22px + env(safe-area-inset-bottom))",
+          zIndex: 20,
+          background: "linear-gradient(to top, #000 72%, rgba(0,0,0,0.85) 90%, transparent)",
+          padding: "18px 22px calc(22px + env(safe-area-inset-bottom))",
         }}
       >
         <div style={{ maxWidth: 640, margin: "0 auto" }}>
