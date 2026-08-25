@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS takes (
   text         TEXT NOT NULL,
   voice_id     TEXT,
   voice_name   TEXT,
+  engine       TEXT DEFAULT 'ElevenLabs',
   has_audio    INTEGER DEFAULT 0,
   duration_sec REAL,
   char_count   INTEGER,
@@ -41,6 +42,13 @@ CREATE TABLE IF NOT EXISTS voices (
   created_at TEXT DEFAULT (datetime('now'))
 );
 `);
+  // migration for older DBs (no-op once the column exists): which TTS engine
+  // produced a take, so ElevenLabs / Kokoro / Chatterbox can be compared.
+  try {
+    d.exec("ALTER TABLE takes ADD COLUMN engine TEXT DEFAULT 'ElevenLabs'");
+  } catch {
+    /* column already exists */
+  }
   _db = d;
   return d;
 }
@@ -60,6 +68,7 @@ export type TakeRow = {
   text: string;
   voice_id: string | null;
   voice_name: string | null;
+  engine: string | null;
   has_audio: number;
   duration_sec: number | null;
   char_count: number | null;

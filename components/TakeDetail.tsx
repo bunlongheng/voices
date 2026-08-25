@@ -102,7 +102,10 @@ export default function TakeDetail({ take, color, onBack }: { take: Take; color:
           </svg>
           voices
         </button>
-        <span style={{ marginLeft: "auto", fontWeight: 700, fontSize: 16, color }}>{take.voice_name || "Custom"}</span>
+        <span style={{ marginLeft: "auto", display: "flex", alignItems: "baseline", gap: 8 }}>
+          <span style={{ fontWeight: 700, fontSize: 16, color }}>{take.voice_name || "Custom"}</span>
+          {take.engine && <span className="dim" style={{ fontSize: 12 }}>{take.engine}</span>}
+        </span>
       </div>
 
       {/* karaoke / text */}

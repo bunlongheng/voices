@@ -84,8 +84,8 @@ export default function TakeBubbles({
                   <path d="M8 5v14l11-7z" />
                 </svg>
                 <span style={{ fontWeight: 700, fontSize: 13 }}>{t.voice_name || "Custom"}</span>
-                <span style={{ fontSize: 10, opacity: 0.7, fontVariantNumeric: "tabular-nums" }}>
-                  {mmss(t.duration_sec ?? 0)}
+                <span style={{ fontSize: 9.5, opacity: 0.75, letterSpacing: 0.2 }}>
+                  {t.engine || mmss(t.duration_sec ?? 0)}
                 </span>
               </button>
 

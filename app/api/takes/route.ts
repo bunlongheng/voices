@@ -27,7 +27,7 @@ export async function GET() {
   }
   const rows = db
     .prepare(
-      "SELECT id,text,voice_id,voice_name,has_audio,duration_sec,char_count,stability,style,speed,created_at FROM takes ORDER BY id DESC",
+      "SELECT id,text,voice_id,voice_name,engine,has_audio,duration_sec,char_count,stability,style,speed,created_at FROM takes ORDER BY id DESC",
     )
     .all() as TakeRow[];
   return NextResponse.json(rows, { headers: { "x-voices-writable": "1" } });

@@ -10,7 +10,7 @@ import db, { type TakeRow, type VoiceRow } from "./db";
 export function writeManifest(): void {
   const takes = db
     .prepare(
-      "SELECT id,text,voice_id,voice_name,has_audio,duration_sec,char_count,stability,style,speed,created_at FROM takes WHERE has_audio=1 ORDER BY id DESC",
+      "SELECT id,text,voice_id,voice_name,engine,has_audio,duration_sec,char_count,stability,style,speed,created_at FROM takes WHERE has_audio=1 ORDER BY id DESC",
     )
     .all() as TakeRow[];
   const voices = db

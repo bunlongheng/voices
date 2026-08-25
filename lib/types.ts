@@ -3,6 +3,7 @@ export type Take = {
   text: string;
   voice_id: string | null;
   voice_name: string | null;
+  engine?: string | null;
   has_audio: number;
   duration_sec: number | null;
   char_count: number | null;
