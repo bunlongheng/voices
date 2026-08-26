@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import SwRegister from "./sw-register";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://voices-bheng.vercel.app";
 
@@ -39,7 +40,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   await headersForNonce();
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <SwRegister />
+      </body>
     </html>
   );
 }
