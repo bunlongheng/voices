@@ -38,10 +38,13 @@ export default function TakeBubbles({
     const col = i % perRow;
     return { x: col * CELL + (row % 2) * (CELL / 2), y: row * ROW };
   };
+  // Sizes in container units so the honeycomb shrinks to fit a narrow phone
+  // instead of clipping its offset row; at full width cq(px) equals px.
+  const cq = (px: number) => `${(px / width) * 100}cqw`;
 
   return (
-    <div style={{ margin: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 24, padding: "12px 0 24px" }}>
-      <div style={{ position: "relative", width, height, maxWidth: "100%" }}>
+    <div style={{ margin: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 24, padding: "12px 0 24px", width: "100%" }}>
+      <div style={{ position: "relative", width: `min(${width}px, 100%)`, aspectRatio: `${width} / ${height}`, containerType: "inline-size" }}>
         {takes.map((t, i) => {
           const { x, y } = pos(i);
           const color = colors[t.id] || "#8e8e93";
@@ -51,10 +54,10 @@ export default function TakeBubbles({
               key={t.id}
               style={{
                 position: "absolute",
-                left: x,
-                top: y,
-                width: D,
-                height: D,
+                left: cq(x),
+                top: cq(y),
+                width: cq(D),
+                height: cq(D),
                 animation: `float ${3 + (i % 4) * 0.4}s ease-in-out ${(i % 5) * 0.35}s infinite`,
               }}
             >
@@ -64,7 +67,7 @@ export default function TakeBubbles({
                 aria-label={`Open ${t.voice_name || "take"}`}
                 style={{
                   position: "absolute",
-                  inset: 5,
+                  inset: cq(5),
                   borderRadius: "50%",
                   display: "flex",
                   flexDirection: "column",
@@ -75,8 +78,8 @@ export default function TakeBubbles({
                   color: ink,
                 }}
               >
-                <span style={{ fontWeight: 700, fontSize: 15 }}>{t.voice_name || "Custom"}</span>
-                <span style={{ fontSize: 10, opacity: 0.78, letterSpacing: 0.2, marginTop: 1 }}>
+                <span style={{ fontWeight: 700, fontSize: cq(15) }}>{t.voice_name || "Custom"}</span>
+                <span style={{ fontSize: cq(10), opacity: 0.78, letterSpacing: 0.2, marginTop: 1 }}>
                   {t.engine || mmss(t.duration_sec ?? 0)}
                 </span>
               </button>
